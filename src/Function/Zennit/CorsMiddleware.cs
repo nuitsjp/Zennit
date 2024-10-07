@@ -14,7 +14,7 @@ public class CorsMiddleware : IFunctionsWorkerMiddleware
         {
             Headers =
             {
-                AccessControlAllowOrigin = "chrome-extension://mlhbhgjbdbgealohaocdehgkopefkndd",
+                AccessControlAllowOrigin = Environment.GetEnvironmentVariable("AccessControlAllowOrigin"),
                 AccessControlAllowMethods = "GET, POST, OPTIONS",
                 AccessControlAllowHeaders = "*",
                 AccessControlAllowCredentials = "true"
