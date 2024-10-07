@@ -1,7 +1,25 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Zennit;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureFunctionsWebApplication(workerApplication =>
+    {
+        workerApplication.UseMiddleware<CorsMiddleware>();
+    })
+    .ConfigureServices(services =>
+    {
+        services.AddHttpClient();
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowSpecificOrigin",
+                builder => builder
+                    .WithOrigins("chrome-extension://mlhbhgjbdbgealohaocdehgkopefkndd")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+        });
+    })
     .Build();
 
-host.Run();
+await host.RunAsync();
