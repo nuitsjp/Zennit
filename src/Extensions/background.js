@@ -90,7 +90,7 @@ async function getAccessToken(code) {
 }
 
 async function authenticate() {
-  const clientId = "Ov23liP5J0K2CK1mKWb7";
+  const clientId = "Ov23ctrNPZFiJabmPhwj";
   const redirectUrl = chrome.identity.getRedirectURL("github");
   console.log("Redirect URL:", redirectUrl);
 
