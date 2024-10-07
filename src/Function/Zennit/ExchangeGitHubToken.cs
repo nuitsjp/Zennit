@@ -13,7 +13,7 @@ public class ExchangeGitHubToken(
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
 
     [Function("ExchangeGitHubToken")]
-    public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+    public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req)
     {
         _logger.LogInformation("C# HTTP trigger function processed a request.");
 
