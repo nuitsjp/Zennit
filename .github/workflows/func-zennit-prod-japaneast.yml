@@ -1,4 +1,4 @@
-name: Build and deploy dotnet core project to Azure Function App - func-rg-zennit-prod-japaneast
+name: Build and deploy dotnet core project to Azure Function App - func-zennit-prod-japaneast
 
 on:
   push:
@@ -45,6 +45,6 @@ jobs:
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: 'func-rg-zennit-prod-japaneast'
+          app-name: 'func-zennit-prod-japaneast'
           slot-name: 'Production'
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
