@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Azure.Functions.Worker;
-using System.Reflection.PortableExecutable;
-using System.Net;
 
 namespace Zennit;
 

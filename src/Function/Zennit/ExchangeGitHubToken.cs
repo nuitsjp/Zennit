@@ -17,7 +17,7 @@ public class ExchangeGitHubToken(
     {
         _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-        var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query)!;
+        var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
         var code = query["code"];
 
         if (string.IsNullOrEmpty(code))
