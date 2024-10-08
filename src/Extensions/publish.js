@@ -57,18 +57,138 @@ document.addEventListener('DOMContentLoaded', async function() {
     return isValid;
   }
 
+  async function authenticate() {
+    const clientId = "Ov23ctrNPZFiJabmPhwj";
+    const redirectUrl = chrome.identity.getRedirectURL("github");
+    console.log("Redirect URL:", redirectUrl);
+  
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&scope=repo,user`;
+  
+    const responseUrl = await new Promise((resolve, reject) => {
+      chrome.identity.launchWebAuthFlow({
+        url: authUrl,
+        interactive: true
+      }, (responseUrl) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(responseUrl);
+        }
+      });
+    });
+
+    console.log("Response URL:", responseUrl);
+    const url = new URL(responseUrl);
+    const code = url.searchParams.get("code");
+    
+    if (!code) {
+      throw new Error("No code received from GitHub");
+    }
+
+    const functionUrl = "https://func-zennit-prod-japaneast.azurewebsites.net/api/ExchangeGitHubToken";
+    const response = await fetch(`${functionUrl}?code=${code}`);
+  
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  
+    const data = await response.text();
+    const params = new URLSearchParams(data);
+    const accessToken = params.get('access_token');
+    if (!accessToken) {
+      throw new Error('Failed to get access token');
+    }
+  
+    return accessToken;
+  }
+
+  function loadData() {
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT], (result) => {
+          resolve(result);
+        }
+      );
+    });
+  }
+
+  // ファイルを GitHub リポジトリに追加する関数
+  async function addFileToRepo(repo, path, content, message, token) {
+    const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+    
+    const data = {
+      message: message,
+      content: btoa(content) // content を Base64 エンコード
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('File successfully created:', result);
+      return result;
+    } catch (error) {
+      console.error('Error creating file:', error);
+      throw error;
+    }
+  }
+
   function publish() {
     if (!validateInputs()) {
       return;
     }
+
+    // Dataを取得
+    loadData().then(async function(data) {
+      const repository = data[STORAGE_KEYS.REPOSITORY];
+      const prompt = data[STORAGE_KEYS.PROMPT];
+      let accessToken = data[STORAGE_KEYS.ACCESS_TOKEN];
+
+      if (!repository || !prompt) {
+        // options.htmlを開く
+        chrome.runtime.openOptionsPage();
+        return;
+      }
+
+      if(!accessToken) {
+        try {
+          accessToken = await authenticate();
+          console.log("Access token:", accessToken);
+        } catch (error) {
+          console.error("Failed to authenticate:", error);
+          return;
+        }
+      }
+
+      // 使用例
+      const fileName = `file01.txt`; // 動的に生成されたファイル名
+      const content = 'This is the content of the new file.';
+      const commitMessage = `Add new file: ${fileName}`;
+      
+      addFileToRepo(repository, fileName, content, commitMessage, accessToken)
+        .then(result => {
+          console.log('File created successfully');
+        })
+        .catch(error => {
+          console.error('Failed to create file:', error);
+        });
+    });
   }
 
   title.addEventListener('input', validateInputs);
   article.addEventListener('input', validateInputs);
   publishButton.addEventListener('click', publish);
-  closeButton.addEventListener('click', function() {
-    window.close();
-  });
+  closeButton.addEventListener('click', function() { window.close(); });
 
   // 初期状態でバリデーションを実行
   validateInputs();
