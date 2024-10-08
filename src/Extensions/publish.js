@@ -6,7 +6,7 @@ import STORAGE_KEYS from './constants.js';
 document.addEventListener('DOMContentLoaded', async function() {
   const title = document.getElementById('title');
   const article = document.getElementById('article');
-  const saveButton = document.getElementById('save');
+  const publishButton = document.getElementById('publish');
   const closeButton = document.getElementById('close');
   const titleError = document.getElementById('titleError');
   const articleError = document.getElementById('articleError');
@@ -53,12 +53,19 @@ document.addEventListener('DOMContentLoaded', async function() {
       articleError.style.display = 'none';
     }
 
-    saveButton.disabled = !isValid;
+    publishButton.disabled = !isValid;
+    return isValid;
+  }
+
+  function publish() {
+    if (!validateInputs()) {
+      return;
+    }
   }
 
   title.addEventListener('input', validateInputs);
   article.addEventListener('input', validateInputs);
-  saveButton.addEventListener('click', validateInputs);
+  publishButton.addEventListener('click', publish);
   closeButton.addEventListener('click', function() {
     window.close();
   });
