@@ -69,64 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-async function handleGitHubApiRequest(action) {
-  console.log(action + " button clicked");
-  try {
-    const response = await callGitHubAPI(action);
-    displayResult(response);
-  } catch (error) {
-    console.error('Error:', error);
-    if (error.message === 'Authentication required') {
-      initiateAuth();
-    } else {
-      alert('エラーが発生しました: ' + error.message);
-    }
-  }
-}
-
-async function callGitHubAPI(action) {
-  const token = await getStoredToken();
-  const response = await fetch(`https://func-zennit-prod-japaneast.azurewebsites.net/api/${action}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (response.status === 401) {
-    throw new Error('Authentication required');
-  }
-
-  return response.json();
-}
-
-function initiateAuth() {
-  chrome.windows.create({
-    url: 'https://func-zennit-prod-japaneast.azurewebsites.net/api/InitiateOAuth',
-    type: 'popup',
-    width: 800,
-    height: 600
-  });
-}
-
-function displayResult(result) {
-  // 結果を表示するロジックを実装
-  console.log(result);
-  // 例: リポジトリ一覧を表示
-  if (Array.isArray(result)) {
-    const repoList = result.map(repo => repo.name).join('\n');
-    alert('リポジトリ一覧:\n' + repoList);
-  }
-}
-
-async function getStoredToken() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get('githubToken', function(data) {
-      resolve(data.githubToken || '');
-    });
-  });
-}
-
 async function fetchRepositories(accessToken) {
   try {
     const response = await fetch('https://api.github.com/user/repos', {
