@@ -66,12 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
             window.close();
           });
         } else {
-          window.open(chrome.runtime.getURL('options.html'));
+          window.open(chrome.runtime.getURL('../html/options.html'));
           window.close();
         }
       } else {
         // リポジトリが設定されている場合、publish.html を新しいタブで開く
-        chrome.tabs.create({ url: chrome.runtime.getURL('publish.html') }, function() {
+        chrome.tabs.create({ url: chrome.runtime.getURL('../html/publish.html') }, function() {
           window.close();
         });
       }

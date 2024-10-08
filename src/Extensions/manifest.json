@@ -13,7 +13,7 @@
     "matches": ["https://claude.ai/*"]
   }],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "html/popup.html"
   },
   "background": {
     "service_worker": "./js/background.js",
@@ -25,7 +25,7 @@
       "js": ["js/content.js"]
     }
   ],
-  "options_page": "options.html",
+  "options_page": "html/options.html",
   "host_permissions": [
     "https://func-zennit-prod-japaneast.azurewebsites.net/*",
     "https://github.com/*",
