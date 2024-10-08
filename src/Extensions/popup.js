@@ -63,7 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
           window.open(chrome.runtime.getURL('options.html'));
         }
       } else {
-        handleButtonClick('publishArticle');
+        // リポジトリパスが設定されている場合、publish.html を新しいタブで開く
+        chrome.tabs.create({ url: chrome.runtime.getURL('publish.html') });
       }
     });
   }

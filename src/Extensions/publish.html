@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Zenn It! - 発行</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="settings-page">
+  <h1>Zenn It! - 発行</h1>
+  
+  <h2 class="required">タイトル</h2>
+  <input type="text" id="title" placeholder="例: yyyy-MM-dd-title.md" required>
+  <div id="titleError" class="error-message">タイトルを入力してください。</div>
+  
+  <h2 class="required">記事</h2>
+  <textarea id="article" rows="20" required></textarea>
+  <div id="articleError" class="error-message">記事を記載してください。</div>
+  
+  <button id="save">
+    <i class="material-icons">publish</i>発行
+  </button>
+
+  <script src="publish.js"></script>
+</body>
+</html>
