@@ -62,13 +62,18 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('リポジトリが設定されていません。設定画面で設定してください。');
         // オプション：設定ページを開く
         if (chrome.runtime.openOptionsPage) {
-          chrome.runtime.openOptionsPage();
+          chrome.runtime.openOptionsPage(() => {
+            window.close();
+          });
         } else {
           window.open(chrome.runtime.getURL('options.html'));
+          window.close();
         }
       } else {
         // リポジトリが設定されている場合、publish.html を新しいタブで開く
-        chrome.tabs.create({ url: chrome.runtime.getURL('publish.html') });
+        chrome.tabs.create({ url: chrome.runtime.getURL('publish.html') }, function() {
+          window.close();
+        });
       }
     });
   }

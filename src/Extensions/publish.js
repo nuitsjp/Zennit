@@ -1,7 +1,7 @@
 // publish.js
 
 // 共通定数をインポート
-import { STORAGE_KEYS } from './constants.js';
+import STORAGE_KEYS from './constants.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
   const title = document.getElementById('title');
