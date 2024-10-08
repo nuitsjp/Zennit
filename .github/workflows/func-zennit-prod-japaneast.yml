@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'azure-functions/src/Zennit' # プロジェクトディレクトリを指定
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'azure-functions/src/ZennIt' # プロジェクトディレクトリを指定
   DOTNET_VERSION: '8.0.x'
 
 jobs:
