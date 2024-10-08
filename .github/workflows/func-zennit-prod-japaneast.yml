@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'src/Function/**' # src/Function 以下の変更があった場合にのみトリガー
+      - 'azure-functions/src/**' # azure-functions/src 以下の変更があった場合にのみトリガー
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'src/Function/Zennit' # プロジェクトディレクトリを指定
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'azure-functions/src/Zennit' # プロジェクトディレクトリを指定
   DOTNET_VERSION: '8.0.x'
 
 jobs:
