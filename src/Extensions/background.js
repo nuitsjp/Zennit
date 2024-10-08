@@ -1,10 +1,10 @@
-// Native Messaging Host の名前
-const hostName = "jp.nuits.claude_to_zenn";
+// background.js
+import STORAGE_KEYS from './constants.js';
 
 // デフォルトの設定値
 const defaultSettings = {
-  repository: "",
-  prompt: ""
+  [STORAGE_KEYS.REPOSITORY]: "",
+  [STORAGE_KEYS.PROMPT]: ""
 };
 
 // 拡張機能のインストール時やアップデート時に実行される
@@ -15,16 +15,16 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // デフォルト設定の初期化
 function initializeDefaultSettings() {
-  chrome.storage.sync.get(['repository', 'prompt'], (result) => {
-    if (!result.repository) {
-      chrome.storage.sync.set({repository: defaultSettings.repository});
+  chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT], (result) => {
+    if (!result[STORAGE_KEYS.REPOSITORY]) {
+      chrome.storage.sync.set({ [STORAGE_KEYS.REPOSITORY]: defaultSettings[STORAGE_KEYS.REPOSITORY] });
     }
-    if (!result.prompt) {
+    if (!result[STORAGE_KEYS.PROMPT]) {
       // デフォルトのプロンプトテキストを読み込む
       fetch(chrome.runtime.getURL('prompt.txt'))
         .then(response => response.text())
         .then(text => {
-          chrome.storage.sync.set({prompt: text});
+          chrome.storage.sync.set({ [STORAGE_KEYS.PROMPT]: text });
         })
         .catch(error => console.error('Error loading default prompt:', error));
     }
@@ -33,8 +33,8 @@ function initializeDefaultSettings() {
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === "getMultilineString") {
-    chrome.storage.sync.get('prompt', function(data) {
-      sendResponse({prompt: data.prompt});
+    chrome.storage.sync.get(STORAGE_KEYS.PROMPT, function(data) {
+      sendResponse({ prompt: data[STORAGE_KEYS.PROMPT] });
     });
     return true;  // Will respond asynchronously
   }

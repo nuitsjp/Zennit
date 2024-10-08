@@ -1,3 +1,7 @@
+// options.js
+
+import STORAGE_KEYS from './constants.js';
+
 document.addEventListener('DOMContentLoaded', function() {
   const repository = document.getElementById('repository');
   const prompt = document.getElementById('prompt');
@@ -21,12 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.body.appendChild(feedbackElement);
 
   // Load saved settings
-  chrome.storage.sync.get(['repository', 'prompt'], function(data) {
-    if (data.repository) {
-      repository.value = data.repository;
+  chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT], function(data) {
+    if (data[STORAGE_KEYS.REPOSITORY]) {
+      repository.value = data[STORAGE_KEYS.REPOSITORY];
     }
-    if (data.prompt) {
-      prompt.value = data.prompt;
+    if (data[STORAGE_KEYS.PROMPT]) {
+      prompt.value = data[STORAGE_KEYS.PROMPT];
     }
     validateInputs(); // 初期状態でバリデーションを実行
   });
@@ -78,8 +82,8 @@ document.addEventListener('DOMContentLoaded', function() {
   saveButton.addEventListener('click', function() {
     if (validateInputs()) {
       chrome.storage.sync.set({
-        repository: repository.value.trim(),
-        prompt: prompt.value.trim()
+        [STORAGE_KEYS.REPOSITORY]: repository.value.trim(),
+        [STORAGE_KEYS.PROMPT]: prompt.value.trim()
       }, function() {
         console.log('Settings saved');
         showFeedback('設定が保存されました');

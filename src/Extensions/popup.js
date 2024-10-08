@@ -1,3 +1,7 @@
+// popup.js
+
+import STORAGE_KEYS from './constants.js';
+
 console.log("Popup script started loading");
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -53,9 +57,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function checkRepositoryPathAndPublish() {
-    chrome.storage.sync.get('repository', function(data) {
-      if (!data.repository) {
-        alert('リポジトリパスが設定されていません。設定画面で設定してください。');
+    chrome.storage.sync.get(STORAGE_KEYS.REPOSITORY, function(data) {
+      if (!data[STORAGE_KEYS.REPOSITORY]) {
+        alert('リポジトリが設定されていません。設定画面で設定してください。');
         // オプション：設定ページを開く
         if (chrome.runtime.openOptionsPage) {
           chrome.runtime.openOptionsPage();
@@ -63,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
           window.open(chrome.runtime.getURL('options.html'));
         }
       } else {
-        // リポジトリパスが設定されている場合、publish.html を新しいタブで開く
+        // リポジトリが設定されている場合、publish.html を新しいタブで開く
         chrome.tabs.create({ url: chrome.runtime.getURL('publish.html') });
       }
     });
