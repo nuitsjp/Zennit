@@ -53,8 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function checkRepositoryPathAndPublish() {
-    chrome.storage.sync.get('repositoryPath', function(data) {
-      if (!data.repositoryPath) {
+    chrome.storage.sync.get('repository', function(data) {
+      if (!data.repository) {
         alert('リポジトリパスが設定されていません。設定画面で設定してください。');
         // オプション：設定ページを開く
         if (chrome.runtime.openOptionsPage) {

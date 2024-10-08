@@ -6,7 +6,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="settings-page">
+<body class="publish-page">
   <h1>Zenn It! - 発行</h1>
   
   <h2 class="required">タイトル</h2>
@@ -14,13 +14,18 @@
   <div id="titleError" class="error-message">タイトルを入力してください。</div>
   
   <h2 class="required">記事</h2>
-  <textarea id="article" rows="20" required></textarea>
+  <textarea id="article" rows="30" required></textarea>
   <div id="articleError" class="error-message">記事を記載してください。</div>
   
-  <button id="save">
-    <i class="material-icons">publish</i>発行
-  </button>
-
+  <div class="button-container">
+    <button id="save">
+      <i class="material-icons">publish</i>発行
+    </button>
+    <button id="close">
+      <i class="material-icons">close</i>閉じる
+    </button>
+  </div>
+  
   <script src="publish.js"></script>
 </body>
 </html>

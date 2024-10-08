@@ -68,17 +68,17 @@ async function publishArticleButton() {
         });
 
         // ストレージから設定を取得
-        chrome.storage.sync.get('repositoryPath', function(data) {
-          const repositoryPath = data.repositoryPath || ''; // デフォルト値を空文字列に設定
+        chrome.storage.sync.get('repository', function(data) {
+          const repository = data.repository || ''; // デフォルト値を空文字列に設定
 
           // メッセージをポスト
           port.postMessage(
             { 
               action: "post", 
               content: text,
-              repositoryPath: repositoryPath // 設定から取得したリポジトリパスを使用
+              repository: repository // 設定から取得したリポジトリパスを使用
             });
-          console.log('nativeMessaging posted. Repository path:', repositoryPath); // メッセージのポストとリポジトリパスをログに記録
+          console.log('nativeMessaging posted. Repository path:', repository); // メッセージのポストとリポジトリパスをログに記録
         });
 
       }).catch(err => {
@@ -115,9 +115,9 @@ async function inputPrompt(inputArea) {
   
   // ストレージから設定を取得
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.get('multilineString', async function(data) {
+    chrome.storage.sync.get('prompt', async function(data) {
       try {
-        let promptText = data.multilineString || ''; // デフォルト値を空文字列に設定
+        let promptText = data.prompt || ''; // デフォルト値を空文字列に設定
         
         if (!promptText) {
           debugLog("No custom prompt found, using default prompt"); // カスタムプロンプトが見つからない場合のログ

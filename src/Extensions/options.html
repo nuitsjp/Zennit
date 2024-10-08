@@ -9,13 +9,16 @@
 <body class="settings-page">
   <h1>Zenn It! 設定</h1>
   
-  <h2 class="required">リポジトリパス</h2>
-  <input type="text" id="repositoryPath" placeholder="例: username/repository" required>
-  <div id="repositoryPathError" class="error-message">リポジトリパスを入力してください</div>
+  <h2 class="required">GitHub リポジトリ</h2>
+  <div class="github-path">
+    <span>https://github.com/</span>
+    <input type="text" id="repository" placeholder="example/Zenn" required>
+  </div>
+  <div id="repositoryError" class="error-message">リポジトリを入力してください</div>
   
   <h2 class="required">要約プロンプト</h2>
-  <textarea id="multilineString" rows="20" required></textarea>
-  <div id="multilineStringError" class="error-message">要約プロンプトを入力してください</div>
+  <textarea id="prompt" rows="30" required></textarea>
+  <div id="promptError" class="error-message">要約プロンプトを入力してください</div>
   
   <button id="save">
     <i class="material-icons">save</i>保存

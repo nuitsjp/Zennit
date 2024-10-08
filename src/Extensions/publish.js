@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const title = document.getElementById('title');
   const article = document.getElementById('article');
   const saveButton = document.getElementById('save');
+  const closeButton = document.getElementById('close');
   const titleError = document.getElementById('titleError');
   const articleError = document.getElementById('articleError');
 
@@ -53,6 +54,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   title.addEventListener('input', validateInputs);
   article.addEventListener('input', validateInputs);
   saveButton.addEventListener('click', validateInputs);
+  closeButton.addEventListener('click', function() {
+    window.close();
+  });
 
   // 初期状態でバリデーションを実行
   validateInputs();

@@ -5,7 +5,6 @@
   "description": "Claude.aiのチャット応対を要約し、Zennにブログとして公開するための拡張です。",
   "permissions": [
     "identity",
-    "nativeMessaging",
     "storage",
     "clipboardRead"
   ],

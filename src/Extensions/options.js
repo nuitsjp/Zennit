@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const repositoryPath = document.getElementById('repositoryPath');
-  const multilineString = document.getElementById('multilineString');
+  const repository = document.getElementById('repository');
+  const prompt = document.getElementById('prompt');
   const saveButton = document.getElementById('save');
-  const repositoryPathError = document.getElementById('repositoryPathError');
-  const multilineStringError = document.getElementById('multilineStringError');
+  const repositoryError = document.getElementById('repositoryError');
+  const promptError = document.getElementById('promptError');
 
   // フィードバック用の要素を追加
   const feedbackElement = document.createElement('div');
@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.body.appendChild(feedbackElement);
 
   // Load saved settings
-  chrome.storage.sync.get(['repositoryPath', 'multilineString'], function(data) {
-    if (data.repositoryPath) {
-      repositoryPath.value = data.repositoryPath;
+  chrome.storage.sync.get(['repository', 'prompt'], function(data) {
+    if (data.repository) {
+      repository.value = data.repository;
     }
-    if (data.multilineString) {
-      multilineString.value = data.multilineString;
+    if (data.prompt) {
+      prompt.value = data.prompt;
     }
     validateInputs(); // 初期状態でバリデーションを実行
   });
@@ -34,22 +34,22 @@ document.addEventListener('DOMContentLoaded', function() {
   function validateInputs() {
     let isValid = true;
 
-    if (!repositoryPath.value.trim()) {
-      repositoryPath.classList.add('error');
-      repositoryPathError.style.display = 'block';
+    if (!repository.value.trim()) {
+      repository.classList.add('error');
+      repositoryError.style.display = 'block';
       isValid = false;
     } else {
-      repositoryPath.classList.remove('error');
-      repositoryPathError.style.display = 'none';
+      repository.classList.remove('error');
+      repositoryError.style.display = 'none';
     }
 
-    if (!multilineString.value.trim()) {
-      multilineString.classList.add('error');
-      multilineStringError.style.display = 'block';
+    if (!prompt.value.trim()) {
+      prompt.classList.add('error');
+      promptError.style.display = 'block';
       isValid = false;
     } else {
-      multilineString.classList.remove('error');
-      multilineStringError.style.display = 'none';
+      prompt.classList.remove('error');
+      promptError.style.display = 'none';
     }
 
     saveButton.disabled = !isValid;
@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Add event listeners for real-time validation
-  repositoryPath.addEventListener('input', validateInputs);
-  multilineString.addEventListener('input', validateInputs);
+  repository.addEventListener('input', validateInputs);
+  prompt.addEventListener('input', validateInputs);
 
   // フィードバックを表示する関数
   function showFeedback(message) {
@@ -78,8 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
   saveButton.addEventListener('click', function() {
     if (validateInputs()) {
       chrome.storage.sync.set({
-        repositoryPath: repositoryPath.value.trim(),
-        multilineString: multilineString.value.trim()
+        repository: repository.value.trim(),
+        prompt: prompt.value.trim()
       }, function() {
         console.log('Settings saved');
         showFeedback('設定が保存されました');
