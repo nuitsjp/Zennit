@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Zennit;
+using ZennIt;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication(workerApplication =>

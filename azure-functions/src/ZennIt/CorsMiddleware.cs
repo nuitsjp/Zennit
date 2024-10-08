@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Azure.Functions.Worker;
 
-namespace Zennit;
+namespace ZennIt;
 
 public class CorsMiddleware : IFunctionsWorkerMiddleware
 {

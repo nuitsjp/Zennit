@@ -3,7 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Zennit;
+namespace ZennIt;
 
 public class ExchangeGitHubToken(
     IHttpClientFactory httpClientFactory,
