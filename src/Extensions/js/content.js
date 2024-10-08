@@ -121,7 +121,7 @@ async function inputPrompt(inputArea) {
         
         if (!promptText) {
           debugLog("No custom prompt found, using default prompt"); // カスタムプロンプトが見つからない場合のログ
-          const url = chrome.runtime.getURL('prompt.txt'); // デフォルトプロンプトテキストのURLを取得
+          const url = chrome.runtime.getURL('assets/prompt/claude.txt'); // デフォルトプロンプトテキストのURLを取得
           const response = await fetch(url); // デフォルトプロンプトテキストをフェッチ
           promptText = await response.text(); // デフォルトプロンプトテキストをテキストとして取得
         } else {

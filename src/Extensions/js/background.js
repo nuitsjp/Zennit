@@ -21,7 +21,7 @@ function initializeDefaultSettings() {
     }
     if (!result[STORAGE_KEYS.PROMPT]) {
       // デフォルトのプロンプトテキストを読み込む
-      fetch(chrome.runtime.getURL('prompt.txt'))
+      fetch(chrome.runtime.getURL('assets/prompt/claude.txt'))
         .then(response => response.text())
         .then(text => {
           chrome.storage.sync.set({ [STORAGE_KEYS.PROMPT]: text });
