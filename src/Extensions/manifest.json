@@ -16,13 +16,13 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "./js/background.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://claude.ai/*"],
-      "js": ["content.js"]
+      "js": ["js/content.js"]
     }
   ],
   "options_page": "options.html",

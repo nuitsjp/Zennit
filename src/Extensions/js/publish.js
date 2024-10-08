@@ -111,13 +111,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
+  function unicodeToBase64(str) {
+    // Unicode文字列をUTF-8バイト配列に変換
+    const utf8Bytes = new TextEncoder().encode(str);
+    // UTF-8バイト配列をBase64エンコード
+    return btoa(String.fromCharCode.apply(null, utf8Bytes));
+  }
+
   // ファイルを GitHub リポジトリに追加する関数
   async function addFileToRepo(repo, path, content, message, token) {
     const url = `https://api.github.com/repos/${repo}/contents/${path}`;
     
     const data = {
       message: message,
-      content: btoa(content) // content を Base64 エンコード
+      content: unicodeToBase64(content) // content を Base64 エンコード
     };
 
     try {
@@ -171,9 +178,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
 
       // 使用例
-      const fileName = `file01.txt`; // 動的に生成されたファイル名
-      const content = 'This is the content of the new file.';
-      const commitMessage = `Add new file: ${fileName}`;
+      const fileName = `articles/${title.value.trim()}`; // 動的に生成されたファイル名
+      const content = article.value.trim();
+      const commitMessage = `Publish: ${fileName}`;
       
       addFileToRepo(repository, fileName, content, commitMessage, accessToken)
         .then(result => {
