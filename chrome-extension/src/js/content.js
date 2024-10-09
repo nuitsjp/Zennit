@@ -1,3 +1,5 @@
+import STORAGE_KEYS from './constants.js';
+
 console.log("Zenn It! content script loaded");
 
 function debugLog(message) {
@@ -46,7 +48,7 @@ async function inputPrompt(inputArea) {
   debugLog("Inputting prompt");
   
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.get('prompt', async function(data) {
+    chrome.storage.sync.get(STORAGE_KEYS.PROMPT, async function(data) {
       try {
         let promptText = data.prompt || '';
         
