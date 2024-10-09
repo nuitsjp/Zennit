@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const closeButton = document.getElementById('close');
   const titleError = document.getElementById('titleError');
   const articleError = document.getElementById('articleError');
+  const publishError = document.getElementById('publishError');
 
   /**
    * クリップボードからテキストを読み取り、タイトルと記事本文に設定する
@@ -254,6 +255,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     try {
+      // エラーメッセージをクリア
+      clearErrorMessage();
+
       // 保存されたデータを読み込む
       const data = await loadData();
       const repository = data[STORAGE_KEYS.REPOSITORY];
@@ -280,11 +284,44 @@ document.addEventListener('DOMContentLoaded', async function() {
       // GitHubリポジトリにファイルを追加
       await addFileToRepo(repository, fileName, content, commitMessage, accessToken);
       console.log('File created successfully');
+
+      // 完了メッセージを表示
+      showCompletionMessage(fileName);
     } catch (error) {
       console.error('Failed to publish:', error);
+      // エラーメッセージを表示
+      showErrorMessage(error.message);
     }
   }
 
+  /**
+   * 完了メッセージを表示する
+   * @param {string} fileName 作成されたファイル名
+   */
+  function showCompletionMessage(fileName) {
+    const message = `ファイル "${fileName}" が正常に公開されました。`;
+    alert(message);
+    window.close();
+  }
+  
+  /**
+   * エラーメッセージを表示する
+   * @param {string} errorMessage エラーメッセージ
+   */
+  function showErrorMessage(errorMessage) {
+    publishError.textContent = `公開に失敗しました: ${errorMessage}`;
+    publishError.style.display = 'block';
+    publishError.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /**
+   * エラーメッセージをクリアする
+   */
+  function clearErrorMessage() {
+    publishError.textContent = '';
+    publishError.style.display = 'none';
+  }
+  
   // イベントリスナーの設定
   title.addEventListener('input', validateInputs);
   article.addEventListener('input', validateInputs);
