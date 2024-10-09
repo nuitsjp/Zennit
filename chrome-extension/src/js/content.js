@@ -1,6 +1,10 @@
 // 定数をインポート
 import STORAGE_KEYS from './constants.js';
 
+// マジックナンバーを定数として定義
+const RETRY_INTERVAL = 500;
+const INPUT_DELAY = 50;
+
 console.log("Zenn It! content script loaded");
 
 /**
@@ -8,17 +12,19 @@ console.log("Zenn It! content script loaded");
  * @param {string} message - ログメッセージ
  */
 function debugLog(message) {
-  console.log("Content script: " + message);
+  console.log(`Content script: ${message}`);
 }
 
 // メッセージリスナーを設定
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  debugLog("Message received: " + JSON.stringify(request));
+  debugLog(`Message received: ${JSON.stringify(request)}`);
   
-  if (request.action == "generateSummary") {
+  if (request.action === "generateSummary") {
     try {
       await generateSummary();
+      sendResponse({ success: true });
     } catch (error) {
+      debugLog(`Error in generateSummary: ${error.message}`);
       sendResponse({ success: false, error: error.message });
     }
   }
@@ -42,15 +48,15 @@ async function generateSummary() {
  */
 function waitForElement(selector) {
   return new Promise((resolve) => {
-    debugLog("Starting waitForElement for: " + selector);
+    debugLog(`Starting waitForElement for: ${selector}`);
     const checkElement = () => {
       const element = document.querySelector(selector);
       if (element) {
         debugLog("Element found");
         resolve(element);
       } else {
-        debugLog("Element not found, retrying in 500ms");
-        setTimeout(checkElement, 500);
+        debugLog(`Element not found, retrying in ${RETRY_INTERVAL}ms`);
+        setTimeout(checkElement, RETRY_INTERVAL);
       }
     };
     checkElement();
@@ -65,39 +71,35 @@ function waitForElement(selector) {
 async function inputPrompt(inputArea) {
   debugLog("Inputting prompt");
   
-  return new Promise((resolve, reject) => {
-    chrome.storage.sync.get(STORAGE_KEYS.PROMPT, async function(data) {
-      try {
-        let promptText = data.prompt || '';
-        
-        if (!promptText) {
-          debugLog("No custom prompt found, using default prompt");
-          const url = chrome.runtime.getURL('assets/prompt/claude.txt');
-          const response = await fetch(url);
-          promptText = await response.text();
-        } else {
-          debugLog("Using custom prompt");
-        }
+  try {
+    const data = await new Promise((resolve) => chrome.storage.sync.get(STORAGE_KEYS.PROMPT, resolve));
+    let promptText = data.prompt || '';
+    
+    if (!promptText) {
+      debugLog("No custom prompt found, using default prompt");
+      const url = chrome.runtime.getURL('assets/prompt/claude.txt');
+      const response = await fetch(url);
+      promptText = await response.text();
+    } else {
+      debugLog("Using custom prompt");
+    }
 
-        // プロンプトテキストを入力エリアに追加
-        inputArea.textContent += promptText;
-        const event = new InputEvent('input', {
-          inputType: 'insertText',
-          data: promptText,
-          bubbles: true,
-          cancelable: true,
-        });
-        inputArea.dispatchEvent(event);
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        debugLog("Prompt inputted");
-        resolve();
-      } catch (error) {
-        debugLog("Error in inputPrompt: " + error.message);
-        reject(error);
-      }
+    // プロンプトテキストを入力エリアに追加
+    inputArea.textContent += promptText;
+    const event = new InputEvent('input', {
+      inputType: 'insertText',
+      data: promptText,
+      bubbles: true,
+      cancelable: true,
     });
-  });
+    inputArea.dispatchEvent(event);
+    await new Promise(resolve => setTimeout(resolve, INPUT_DELAY));
+
+    debugLog("Prompt inputted");
+  } catch (error) {
+    debugLog(`Error in inputPrompt: ${error.message}`);
+    throw error;
+  }
 }
 
 /**
@@ -114,5 +116,5 @@ async function pressEnter(element) {
   element.dispatchEvent(enterEvent);
   element.textContent += '\n';
   element.dispatchEvent(new Event('input', { bubbles: true }));
-  await new Promise(resolve => setTimeout(resolve, 50));
+  await Promise.resolve();
 }
