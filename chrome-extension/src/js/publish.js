@@ -13,14 +13,15 @@ async function loadConfig() {
 
 // DOMの読み込みが完了したら実行
 document.addEventListener('DOMContentLoaded', async function() {
+  
   // 設定を読み込む
   const config = await loadConfig();
-  
+
   // アプリケーション全体で使用する定数を定義
   const CLIENT_ID = config.CLIENT_ID;
   const FUNCTION_URL = config.FUNCTION_URL;
   const GITHUB_AUTH_URL = config.GITHUB_AUTH_URL;
-  
+
   // DOM要素の取得
   const title = document.getElementById('title');
   const article = document.getElementById('article');
@@ -198,6 +199,10 @@ document.addEventListener('DOMContentLoaded', async function() {
    * @returns {Promise<Object>} GitHubのAPI応答
    */
   async function addFileToRepo(repo, path, content, message, token) {
+    // 設定を読み込む
+    const config = await loadConfig();
+    const GITHUB_API_BASE_URL = config.GITHUB_API_BASE_URL;
+
     // GitHub API のエンドポイントURLを構築
     // このURLは特定のリポジトリ内の特定のファイルパスを指します
     const url = `${GITHUB_API_BASE_URL}/repos/${repo}/contents/${path}`;

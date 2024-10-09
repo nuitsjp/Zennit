@@ -1,5 +1,6 @@
 {
     "CLIENT_ID": "Ov23ctrNPZFiJabmPhwj",
     "FUNCTION_URL": "https://func-zennit-prod-japaneast.azurewebsites.net/api/ExchangeGitHubToken",
-    "GITHUB_AUTH_URL": "https://github.com/login/oauth/authorize"
+    "GITHUB_AUTH_URL": "https://github.com/login/oauth/authorize",
+    "GITHUB_API_BASE_URL": "https://api.github.com"
 }
