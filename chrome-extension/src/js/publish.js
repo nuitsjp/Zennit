@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // client_id: アプリケーションの識別子
     // redirect_uri: 認証後のリダイレクト先
     // scope: 要求する権限（repo: リポジトリアクセス, user: ユーザー情報アクセス）
-    const authUrl = `${GITHUB_AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}&scope=repo,user`;
+    const authUrl = `${GITHUB_AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}&scope=repo`;
 
     // Chrome拡張機能の認証フローを開始
     // この処理はポップアップウィンドウを開き、ユーザーにGitHubログインを促します
