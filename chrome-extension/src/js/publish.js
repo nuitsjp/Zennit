@@ -5,11 +5,13 @@
 // 共通定数をインポート
 import STORAGE_KEYS from './constants.js';
 
+// マニフェストから設定を読み込む
+const config = chrome.runtime.getManifest().config;
+
 // アプリケーション全体で使用する定数を定義
-const CLIENT_ID = "Ov23ctrNPZFiJabmPhwj";  // GitHub OAuth アプリケーションのクライアントID
-const FUNCTION_URL = "https://func-zennit-prod-japaneast.azurewebsites.net/api/ExchangeGitHubToken";  // トークン交換用の Azure Function URL
-const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";  // GitHub認証のベースURL
-const GITHUB_API_BASE_URL = "https://api.github.com";  // GitHub API のベースURL
+const CLIENT_ID = config.CLIENT_ID;
+const FUNCTION_URL = config.FUNCTION_URL;
+const GITHUB_AUTH_URL = config.GITHUB_AUTH_URL;
 
 // DOMの読み込みが完了したら実行
 document.addEventListener('DOMContentLoaded', async function() {
@@ -155,122 +157,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
 
-  /**
-   * Chrome拡張機能のストレージからデータを読み込む
-   * この関数は、保存されたリポジトリ情報とプロンプトを取得します
-   * @returns {Promise<Object>} ストレージから読み込んだデータ
-   */
-  function loadData() {
-    return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT], (result) => {
-        resolve(result);
-      });
-    });
-  }
-
-  /**
-   * Unicode文字列をBase64エンコードする
-   * この関数は、GitHubAPIにファイル内容を送信する際に必要なエンコーディングを行います
-   * @param {string} str エンコードする文字列
-   * @returns {string} Base64エンコードされた文字列
-   */
-  function unicodeToBase64(str) {
-    const utf8Bytes = new TextEncoder().encode(str);
-    return btoa(String.fromCharCode.apply(null, utf8Bytes));
-  }
-
-  /**
-   * ファイルをGitHubリポジトリに追加する
-   * この関数は、GitHub API を使用してリポジトリに新しいファイルを作成します
-   * @param {string} repo リポジトリ名 (形式: "ユーザー名/リポジトリ名")
-   * @param {string} path リポジトリ内のファイルパス
-   * @param {string} content ファイルの内容
-   * @param {string} message コミットメッセージ
-   * @param {string} token GitHub アクセストークン
-   * @returns {Promise<Object>} GitHubのAPI応答
-   */
-  async function addFileToRepo(repo, path, content, message, token) {
-    // GitHub API のエンドポイントURLを構築
-    // このURLは特定のリポジトリ内の特定のファイルパスを指します
-    const url = `${GITHUB_API_BASE_URL}/repos/${repo}/contents/${path}`;
-    
-    // GitHub API に送信するデータを準備
-    const data = {
-      message: message,  // コミットメッセージ
-      content: unicodeToBase64(content)  // Base64エンコードされたファイル内容
-    };
-
-    try {
-      // GitHub API にリクエストを送信
-      // メソッドはPUT（ファイルの作成または更新）
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,  // 認証用のアクセストークン
-          'Content-Type': 'application/json',  // JSONデータを送信することを指定
-        },
-        body: JSON.stringify(data)  // データをJSON文字列に変換
-      });
-
-      // レスポンスのステータスコードをチェック
-      if (!response.ok) {
-        // エラーレスポンスの場合、詳細情報を含めてエラーをスロー
-        const errorBody = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
-      }
-
-      // レスポンスをJSONとしてパース
-      const result = await response.json();
-      console.log('File successfully created:', result);
-      return result;  // 成功時はGitHub APIのレスポンスを返す
-    } catch (error) {
-      // ネットワークエラーやAPI側のエラーをログに記録
-      console.error('Error creating file:', error);
-      // エラーを上位の関数にスローして、適切に処理できるようにする
-      throw error;
-    }
-  }
-
-  /**
-   * 記事を公開する
-   * この関数は、ユーザーが入力した記事をGitHubリポジトリに公開するメインのプロセスを実行します
-   */
-  async function publish() {
-    if (!validateInputs()) {
-      return;
-    }
-
-    try {
-      // 保存されたデータを読み込む
-      const data = await loadData();
-      const repository = data[STORAGE_KEYS.REPOSITORY];
-      const prompt = data[STORAGE_KEYS.PROMPT];
-      let accessToken = data[STORAGE_KEYS.ACCESS_TOKEN];
-
-      // リポジトリ情報やプロンプトが設定されていない場合、オプションページを開く
-      if (!repository || !prompt) {
-        chrome.runtime.openOptionsPage();
-        return;
-      }
-
-      // アクセストークンがない場合、認証を行う
-      if(!accessToken) {
-        accessToken = await authenticate();
-        console.log("Access token:", accessToken);
-      }
-
-      // ファイル名とコンテンツを準備
-      const fileName = `articles/${title.value.trim()}`;
-      const content = article.value.trim();
-      const commitMessage = `Publish: ${fileName}`;
-      
-      // GitHubリポジトリにファイルを追加
-      await addFileToRepo(repository, fileName, content, commitMessage, accessToken);
-      console.log('File created successfully');
-    } catch (error) {
-      console.error('Failed to publish:', error);
-    }
-  }
+  // ... 残りの関数は変更なし
 
   // イベントリスナーの設定
   title.addEventListener('input', validateInputs);

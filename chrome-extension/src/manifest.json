@@ -41,5 +41,10 @@
     "48": "assets/icons/icon48.png",
     "128": "assets/icons/icon128.png",
     "256": "assets/icons/icon256.png"
+  },
+  "config": {
+    "CLIENT_ID": "Ov23ctrNPZFiJabmPhwj",
+    "FUNCTION_URL": "https://func-zennit-prod-japaneast.azurewebsites.net/api/ExchangeGitHubToken",
+    "GITHUB_AUTH_URL": "https://github.com/login/oauth/authorize"
   }
 }
