@@ -2,8 +2,12 @@
 // このスクリプトは、ユーザーが入力した記事をGitHubリポジトリに公開するための機能を提供します。
 // GitHubのOAuth認証、ファイルの作成、およびエラー処理を含みます。
 
+// Octokitをインポート
+import { Octokit } from '@octokit/rest';
+
 // 共通定数をインポート
 import STORAGE_KEYS from './constants.js';
+
 
 // 設定を読み込む関数
 async function loadConfig() {
@@ -202,52 +206,47 @@ document.addEventListener('DOMContentLoaded', async function() {
    * @param {string} token GitHub アクセストークン
    * @returns {Promise<Object>} GitHubのAPI応答
    */
-  async function addFileToRepo(repo, path, content, message, token) {
-    // 設定を読み込む
-    const config = await loadConfig();
-    const GITHUB_API_BASE_URL = config.GITHUB_API_BASE_URL;
-
-    // GitHub API のエンドポイントURLを構築
-    // このURLは特定のリポジトリ内の特定のファイルパスを指します
-    const url = `${GITHUB_API_BASE_URL}/repos/${repo}/contents/${path}`;
+  async function addFileToRepo(repo, path, content, message, accessToken) {
+    const [owner, repoName] = repo.split('/');
     
-    // GitHub API に送信するデータを準備
-    const data = {
-      message: message,  // コミットメッセージ
-      content: unicodeToBase64(content)  // Base64エンコードされたファイル内容
-    };
+    try {
+      // Octokitインスタンスを初期化
+      const octokit = new Octokit({ auth: accessToken });
 
-    // GitHub API にリクエストを送信
-    // メソッドはPUT（ファイルの作成または更新）
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,  // 認証用のアクセストークン
-        'Content-Type': 'application/json',  // JSONデータを送信することを指定
-      },
-      body: JSON.stringify(data)  // データをJSON文字列に変換
-    });
+      // ファイルの現在の状態を取得
+      const { data: currentFile } = await octokit.rest.repos.getContent({
+        owner,
+        repo: repoName,
+        path,
+      }).catch(e => {
+        if (e.status === 404) return { data: null };
+        throw e;
+      });
 
-    // レスポンスのステータスコードをチェック
-    if (!response.ok) {
+      // ファイルを作成または更新
+      const response = await octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo: repoName,
+        path,
+        message,
+        content: unicodeToBase64(content),
+        sha: currentFile ? currentFile.sha : undefined,
+      });
+
+      console.log('File successfully created or updated:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in addFileToRepo:', error);
       let message;
-      if(response.status === 404) {
+      if (error.status === 404) {
         message = '記事の更新に失敗しました。リポジトリの設定に誤りがあるかもしれません。リポジトリの設定を確認してください。';
       } else {
         message = '記事の更新に失敗しました。';
       }
-
-      // エラーレスポンスの場合、詳細情報を含めてエラーをスロー
-      const error = new Error(message);
-      const errorBody = await response.text();
-      error.detail = `HTTP error! status: ${response.status}, body: ${errorBody}`;
-      throw error;
+      const customError = new Error(message);
+      customError.detail = error.message;
+      throw customError;
     }
-
-    // レスポンスをJSONとしてパース
-    const result = await response.json();
-    console.log('File successfully created:', result);
-    return result;  // 成功時はGitHub APIのレスポンスを返す
   }
 
   /**

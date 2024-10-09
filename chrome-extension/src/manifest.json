@@ -12,7 +12,7 @@
     "resources": [
       "assets/prompt/claude.txt",
       "assets/json/config.json",
-      "js/content.js",
+      "js/content.bundle.js",
       "js/constants.js"
     ],
     "matches": ["https://claude.ai/*"]
@@ -21,13 +21,13 @@
     "default_popup": "html/popup.html"
   },
   "background": {
-    "service_worker": "./js/background.js",
+    "service_worker": "./js/background.bundle.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://claude.ai/*"],
-      "js": ["js/content-loader.js"]
+      "js": ["js/content-loader.bundle.js"]
     }
   ],
   "options_page": "html/options.html",
