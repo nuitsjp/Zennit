@@ -20,11 +20,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 
 // 要約して記事を生成する非同期関数
 async function generateSummary() {
-  debugLog("Waiting for input element"); // 入力要素の待機をログに記録
-  const inputElement = await waitForElement('div[contenteditable="true"]'); // 入力要素を待機
-  debugLog("Input element found"); // 入力要素が見つかったことをログに記録
-  await inputPrompt(inputElement); // プロンプトを入力
-  await pressEnter(inputElement); // Enterキーを押す
+  debugLog("Waiting for input element");
+  const inputElement = await waitForElement('div[contenteditable="true"]');
+  debugLog("Input element found");
+  await inputPrompt(inputElement);
+  await pressEnter(inputElement);
 }
 
 function waitForElement(selector) {
