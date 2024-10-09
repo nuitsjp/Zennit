@@ -35,12 +35,6 @@
     "https://github.com/*",
     "https://api.github.com/*"
   ],
-  "oauth2": {
-    "client_id": "Ov23ctrNPZFiJabmPhwj",
-    "scopes": [
-      "https://www.googleapis.com/auth/github"
-    ]
-  },
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
