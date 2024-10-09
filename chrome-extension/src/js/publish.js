@@ -105,63 +105,67 @@ document.addEventListener('DOMContentLoaded', async function() {
     // redirect_uri: 認証後のリダイレクト先
     // scope: 要求する権限（repo: リポジトリアクセス, user: ユーザー情報アクセス）
     const authUrl = `${GITHUB_AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}&scope=repo,user`;
-  
-    try {
-      // Chrome拡張機能の認証フローを開始
-      // この処理はポップアップウィンドウを開き、ユーザーにGitHubログインを促します
-      const code = await new Promise((resolve, reject) => {
-        chrome.identity.launchWebAuthFlow({
-          url: authUrl,
-          interactive: true  // ユーザーの操作が必要な対話型の認証を指定
-        }, (responseUrl) => {
-          // 認証プロセスが完了したら、この関数が呼び出されます
-          if (chrome.runtime.lastError) {
-            // エラーがある場合（例：ユーザーがキャンセルした場合）は reject
-            reject(new Error("GitHubの認証に失敗しました。"));
+
+    // Chrome拡張機能の認証フローを開始
+    // この処理はポップアップウィンドウを開き、ユーザーにGitHubログインを促します
+    const code = await new Promise((resolve, reject) => {
+      chrome.identity.launchWebAuthFlow({
+        url: authUrl,
+        interactive: true  // ユーザーの操作が必要な対話型の認証を指定
+      }, (responseUrl) => {
+        // 認証プロセスが完了したら、この関数が呼び出されます
+        if (chrome.runtime.lastError) {
+          // エラーがある場合（例：ユーザーがキャンセルした場合）は reject
+          reject(new Error("GitHubの認証に失敗しました。"));
+        } else {
+          // レスポンスURLから認証コードを抽出
+          const url = new URL(responseUrl);
+          const code = url.searchParams.get("code");
+          
+          // 認証コードが取得できなかった場合はエラー
+          if (!code) {
+            // ユーザーによって認証がキャンセルされた場合もここに入ります。
+            let error = new Error("GitHubの認証コードが取得できませんでした。");
+            error.detail = `responseUrl: ${responseUrl}`;
+            reject(error);
           } else {
-            // レスポンスURLから認証コードを抽出
-            const url = new URL(responseUrl);
-            const code = url.searchParams.get("code");
-            
-            // 認証コードが取得できなかった場合はエラー
-            if (!code) {
-              // ユーザーによって認証がキャンセルされた場合もここに入ります。
-              let error = new Error("GitHubの認証コードが取得できませんでした。");
-              error.detail = `responseUrl: ${responseUrl}`;
-              reject(error);
-            } else {
-              resolve(code);
-            }
+            resolve(code);
           }
-        });
+        }
       });
+    });
 
-      // 認証コードをアクセストークンと交換
-      // この処理はサーバーサイドで行うべきですが、ここではAzure Functionを使用しています
-      const response = await fetch(`${FUNCTION_URL}?code=${code}`);
-    
-      // レスポンスのステータスコードをチェック
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // 認証コードをアクセストークンと交換
+    // この処理はサーバーサイドで行うべきですが、ここではAzure Functionを使用しています
+    const response = await fetch(`${FUNCTION_URL}?code=${code}`);
+  
+    // レスポンスのステータスコードをチェック
+    if (!response.ok) {
+      if(response.status === 403) {
+        throw new Error('Zenn It!認証サービスが停止している可能性があります。しばらくしてから再度お試しください。');
+      } else {
+        const error = new Error('GitHubのアクセストークンの取得に失敗しました。');
+        const errorBody = await response.text();
+        error.detail = `HTTP error! status: ${response.status}, body: ${errorBody}`;
+        throw error;
       }
-    
-      // レスポンスからアクセストークンを抽出
-      const data = await response.text();
-      const params = new URLSearchParams(data);
-      const accessToken = params.get('access_token');
+    }
+  
+    // レスポンスからアクセストークンを抽出
+    const data = await response.text();
+    const params = new URLSearchParams(data);
+    const accessToken = params.get('access_token');
 
-      // アクセストークンが取得できなかった場合はエラー
-      if (!accessToken) {
-        throw new Error('Failed to get access token');
-      }
-    
-      // 取得したアクセストークンを返す
-      return accessToken;
-    } catch (error) {
-      // 認証プロセス中に発生したエラーをログに記録し、再スロー
-      console.error("Authentication failed:", error);
+    // アクセストークンが取得できなかった場合はエラー
+    if (!accessToken) {
+      // エラーレスポンスの場合、詳細情報を含めてエラーをスロー
+      const error = new Error('GitHubのアクセストークンの取得に失敗しました。');
+      error.detail = await response.text();
       throw error;
     }
+  
+    // 取得したアクセストークンを返す
+    return accessToken;
   }
 
   /**
