@@ -314,12 +314,9 @@ document.addEventListener('DOMContentLoaded', async function() {
    * @param {Error} error エラーオブジェクト
    */
   function showErrorMessage(error) {
-    if(error.detail) {
-      const detail = error.detail || '';
-      publishError.innerHTML = `${error.message}<br><br>詳細: ${detail}`;
-    } else {
-      publishError.innerHTML = `${error.message}`;
-    }
+    let errorMessage = error.message || '発行に失敗しました。';
+    
+    publishError.innerHTML = `${errorMessage}<br><br>詳細: ${error.detail || error.stack || '詳細情報がありません。'}`;
     publishError.style.display = 'block';
     publishError.scrollIntoView({ behavior: 'smooth' });
   }
