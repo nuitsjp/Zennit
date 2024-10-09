@@ -164,4 +164,18 @@ body {
     margin-top: 10px;
     margin-bottom: 10px;
     border-radius: 4px;
+    color: #d8000c;
+  }
+  
+  #publishError p {
+    margin: 5px 0;
+  }
+  
+  #publishError p:first-child {
+    font-weight: bold;
+  }
+  
+  #publishError p:last-child {
+    font-size: 0.9em;
+    color: #666;
   }

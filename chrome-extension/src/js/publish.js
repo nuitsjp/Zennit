@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Chrome拡張機能用のリダイレクトURLを取得
     // このURLは、GitHub OAuth アプリケーションの設定で許可されている必要があります
     const redirectUrl = chrome.identity.getRedirectURL("github");
-    console.log("Redirect URL:", redirectUrl);
   
     // GitHub OAuth認証用のURLを構築
     // client_id: アプリケーションの識別子
@@ -110,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
       // Chrome拡張機能の認証フローを開始
       // この処理はポップアップウィンドウを開き、ユーザーにGitHubログインを促します
-      const responseUrl = await new Promise((resolve, reject) => {
+      const code = await new Promise((resolve, reject) => {
         chrome.identity.launchWebAuthFlow({
           url: authUrl,
           interactive: true  // ユーザーの操作が必要な対話型の認証を指定
@@ -118,24 +117,24 @@ document.addEventListener('DOMContentLoaded', async function() {
           // 認証プロセスが完了したら、この関数が呼び出されます
           if (chrome.runtime.lastError) {
             // エラーがある場合（例：ユーザーがキャンセルした場合）は reject
-            reject(chrome.runtime.lastError);
+            reject(new Error("GitHubの認証に失敗しました。"));
           } else {
-            // 正常に完了した場合は、レスポンスURLをresolve
-            resolve(responseUrl);
+            // レスポンスURLから認証コードを抽出
+            const url = new URL(responseUrl);
+            const code = url.searchParams.get("code");
+            
+            // 認証コードが取得できなかった場合はエラー
+            if (!code) {
+              // ユーザーによって認証がキャンセルされた場合もここに入ります。
+              let error = new Error("GitHubの認証コードが取得できませんでした。");
+              error.detail = `responseUrl: ${responseUrl}`;
+              reject(error);
+            } else {
+              resolve(code);
+            }
           }
         });
       });
-
-      console.log("Response URL:", responseUrl);
-
-      // レスポンスURLから認証コードを抽出
-      const url = new URL(responseUrl);
-      const code = url.searchParams.get("code");
-      
-      // 認証コードが取得できなかった場合はエラー
-      if (!code) {
-        throw new Error("No code received from GitHub");
-      }
 
       // 認証コードをアクセストークンと交換
       // この処理はサーバーサイドで行うべきですが、ここではAzure Functionを使用しています
@@ -214,35 +213,37 @@ document.addEventListener('DOMContentLoaded', async function() {
       content: unicodeToBase64(content)  // Base64エンコードされたファイル内容
     };
 
-    try {
-      // GitHub API にリクエストを送信
-      // メソッドはPUT（ファイルの作成または更新）
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,  // 認証用のアクセストークン
-          'Content-Type': 'application/json',  // JSONデータを送信することを指定
-        },
-        body: JSON.stringify(data)  // データをJSON文字列に変換
-      });
+    // GitHub API にリクエストを送信
+    // メソッドはPUT（ファイルの作成または更新）
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,  // 認証用のアクセストークン
+        'Content-Type': 'application/json',  // JSONデータを送信することを指定
+      },
+      body: JSON.stringify(data)  // データをJSON文字列に変換
+    });
 
-      // レスポンスのステータスコードをチェック
-      if (!response.ok) {
-        // エラーレスポンスの場合、詳細情報を含めてエラーをスロー
-        const errorBody = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
+    // レスポンスのステータスコードをチェック
+    if (!response.ok) {
+      let message;
+      if(response.status === 404) {
+        message = '記事の更新に失敗しました。リポジトリの設定に誤りがあるかもしれません。リポジトリの設定を確認してください。';
+      } else {
+        message = '記事の更新に失敗しました。';
       }
 
-      // レスポンスをJSONとしてパース
-      const result = await response.json();
-      console.log('File successfully created:', result);
-      return result;  // 成功時はGitHub APIのレスポンスを返す
-    } catch (error) {
-      // ネットワークエラーやAPI側のエラーをログに記録
-      console.error('Error creating file:', error);
-      // エラーを上位の関数にスローして、適切に処理できるようにする
+      // エラーレスポンスの場合、詳細情報を含めてエラーをスロー
+      const error = new Error(message);
+      const errorBody = await response.text();
+      error.detail = `HTTP error! status: ${response.status}, body: ${errorBody}`;
       throw error;
     }
+
+    // レスポンスをJSONとしてパース
+    const result = await response.json();
+    console.log('File successfully created:', result);
+    return result;  // 成功時はGitHub APIのレスポンスを返す
   }
 
   /**
@@ -273,7 +274,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       // アクセストークンがない場合、認証を行う
       if(!accessToken) {
         accessToken = await authenticate();
-        console.log("Access token:", accessToken);
       }
 
       // ファイル名とコンテンツを準備
@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
       console.error('Failed to publish:', error);
       // エラーメッセージを表示
-      showErrorMessage(error.message);
+      showErrorMessage(error);
     }
   }
 
@@ -304,12 +304,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.close();
   }
   
+
   /**
    * エラーメッセージを表示する
-   * @param {string} errorMessage エラーメッセージ
+   * @param {Error} error エラーオブジェクト
    */
-  function showErrorMessage(errorMessage) {
-    publishError.textContent = `公開に失敗しました: ${errorMessage}`;
+  function showErrorMessage(error) {
+    if(error.detail) {
+      const detail = error.detail || '';
+      publishError.innerHTML = `${error.message}<br><br>詳細: ${detail}`;
+    } else {
+      publishError.innerHTML = `${error.message}`;
+    }
     publishError.style.display = 'block';
     publishError.scrollIntoView({ behavior: 'smooth' });
   }
