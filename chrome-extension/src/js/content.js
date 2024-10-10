@@ -85,31 +85,14 @@ async function inputPrompt(inputArea) {
   
   try {
     const data = await new Promise((resolve) => chrome.storage.sync.get(STORAGE_KEYS.PROMPT, resolve));
-    let promptText = data[STORAGE_KEYS.PROMPT] || '';
+    let promptText = data[STORAGE_KEYS.PROMPT];
     
-    if (!promptText) {
-      debugLog("No custom prompt found, using default prompt");
-      promptText = await fetchDefaultPrompt();
-    } else {
-      debugLog("Using custom prompt");
-    }
-
     await simulateTyping(inputArea, promptText);
     debugLog("Prompt inputted");
   } catch (error) {
     debugLog(`Error in inputPrompt: ${error.message}`);
     throw error;
   }
-}
-
-/**
- * デフォルトのプロンプトを取得する関数
- * @returns {Promise<string>} デフォルトのプロンプトテキスト
- */
-async function fetchDefaultPrompt() {
-  const url = chrome.runtime.getURL('assets/prompt/claude.txt');
-  const response = await fetch(url);
-  return await response.text();
 }
 
 /**
