@@ -12,6 +12,19 @@ chrome.runtime.onInstalled.addListener((details) => {
   initializeDefaultSettings();
 });
 
+// アイコンクリック時にポップアップを表示するリスナー
+chrome.action.onClicked.addListener((tab) => {
+  const url = tab.url;
+  console.log(`Icon clicked. URL: ${url}`);
+  // サポートするURLの場合はポップアップを表示
+  if (url.startsWith("https://claude.ai/") || url.startsWith("https://chatgpt.com/")) {
+    chrome.action.setPopup({ tabId: tab.id, popup: "popup.html" });
+  } else {
+    chrome.action.setPopup({ tabId: tab.id, popup: "" });
+  }
+});
+
+
 /**
  * デフォルト設定を初期化する関数
  * リポジトリ設定とプロンプトが未設定の場合、デフォルト値を設定します。
