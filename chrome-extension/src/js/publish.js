@@ -1,5 +1,6 @@
 // publish.js
 // このスクリプトは、ユーザーが入力した記事をGitHubリポジトリに公開するための機能を提供します。
+// GitHubのOAuth認証、ファイルの作成、およびエラー処理を含みます。
 
 import GitHubService from './github-service.js';
 import STORAGE_KEYS from './constants.js';
@@ -10,7 +11,6 @@ import STORAGE_KEYS from './constants.js';
  */
 class PublishUI {
   constructor() {
-    this.config = null;
     // DOM要素の取得
     this.title = document.getElementById('title');
     this.article = document.getElementById('article');
@@ -23,22 +23,13 @@ class PublishUI {
 
   /**
    * UIの初期化
-   * 設定の読み込み、イベントのバインド、クリップボードの読み取りを行います。
+   * GitHubServiceの初期化、イベントのバインド、クリップボードの読み取りを行います。
    */
   async initialize() {
-    this.config = await this.loadConfig();
+    await GitHubService.initialize();
     this.bindEvents();
     await this.readClipboard();
     this.validateInputs();
-  }
-
-  /**
-   * 設定ファイルを読み込む
-   * @returns {Promise<Object>} 設定オブジェクト
-   */
-  async loadConfig() {
-    const response = await fetch(chrome.runtime.getURL('assets/json/config.json'));
-    return await response.json();
   }
 
   /**
@@ -105,39 +96,39 @@ class PublishUI {
    */
   async loadStorageData() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT, STORAGE_KEYS.TOKEN], resolve);
+      chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT], resolve);
     });
   }
 
   /**
-   * Unicode文字列をBase64エンコードする
-   * @param {string} str エンコードする文字列
-   * @returns {string} Base64エンコードされた文字列
+   * 記事を公開する
+   * ユーザーが入力した記事をGitHubリポジトリに公開するメインのプロセスを実行します
    */
-  unicodeToBase64(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
   async publish() {
     if (!this.validateInputs()) return;
 
     try {
       this.clearErrorMessage();
 
+      // 保存されたデータを読み込む
       const data = await this.loadStorageData();
-      const { [STORAGE_KEYS.REPOSITORY]: repository, [STORAGE_KEYS.PROMPT]: prompt, [STORAGE_KEYS.TOKEN]: accessToken } = data;
+      const { [STORAGE_KEYS.REPOSITORY]: repository, [STORAGE_KEYS.PROMPT]: prompt } = data;
 
+      // リポジトリ情報やプロンプトが設定されていない場合、オプションページを開く
       if (!repository || !prompt) {
         chrome.runtime.openOptionsPage();
         return;
       }
 
-      const token = accessToken || await GitHubService.authenticate(this.config);
+      // GitHubの認証を行う
+      const token = await GitHubService.authenticate();
 
+      // ファイル名とコンテンツを準備
       const fileName = `articles/${this.title.value.trim()}`;
       const content = this.article.value.trim();
       const commitMessage = `Publish: ${fileName}`;
       
+      // GitHubリポジトリにファイルを追加
       await GitHubService.addFileToRepo(repository, fileName, content, commitMessage, token);
       this.showCompletionMessage(fileName);
     } catch (error) {
