@@ -10,12 +10,16 @@
   ],
   "web_accessible_resources": [{
     "resources": [
+      "assets/prompt/chatgpt.txt",
       "assets/prompt/claude.txt",
       "assets/json/config.json",
       "js/content.bundle.js",
       "js/constants.bundle.js"
     ],
-    "matches": ["https://claude.ai/*"]
+    "matches": [
+      "https://claude.ai/*",
+      "https://chatgpt.com/*"
+  ]
   }],
   "action": {
     "default_popup": "html/popup.html"
@@ -26,7 +30,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://claude.ai/*"],
+      "matches": [
+        "https://claude.ai/*",
+        "https://chatgpt.com/*"
+      ],
       "js": ["js/content.bundle.js"]
     }
   ],

@@ -43,12 +43,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function generateSummary() {
   try {
-    debugLog("Waiting for input element");
-    const inputElement = await waitForElement('div[contenteditable="true"]');
-    debugLog("Input element found");
-    await inputPrompt(inputElement);
-    await pressEnter(inputElement);
-  } catch (error) {
+    debugLog("Determining platform...");
+    const currentURL = window.location.href;
+
+    const path = currentURL.includes("claude.ai") 
+      ? 'div[contenteditable="true"]'
+      : '#prompt-textarea';
+
+      debugLog(`Waiting for input element. Path: ${path}`);
+      const inputElement = await waitForElement(path);
+      debugLog(`Input element found. Element: ${inputElement}`);
+      await inputPrompt(inputElement);
+      await pressEnter(inputElement);
+    } catch (error) {
     debugLog(`Error in generateSummary: ${error.message}`);
     throw error;
   }
