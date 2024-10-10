@@ -87,7 +87,7 @@ class PopupUI {
    * アクティブなタブに要約生成のメッセージを送信します
    */
   async generateSummary() {
-    clearStatus();
+    this.clearStatus();
     try {
       const tabs = await chrome.tabs.query({active: true, currentWindow: true});
       if (!tabs || tabs.length === 0) {
@@ -108,7 +108,7 @@ class PopupUI {
    * リポジトリの設定を確認し、適切な次のステップを実行します
    */
   async publish() {
-    clearStatus();
+    this.clearStatus();
     try {
       const data = await chrome.storage.sync.get(STORAGE_KEYS.REPOSITORY);
       if (!data[STORAGE_KEYS.REPOSITORY]) {

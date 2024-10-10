@@ -9,6 +9,7 @@ module.exports = (env, argv) => {
       background: './src/js/background.js',
       constants: './src/js/constants.js',
       content: './src/js/content.js',
+      'github-service': './src/js/github-service.js',
       options: './src/js/options.js',
       popup: './src/js/popup.js',
       publish: './src/js/publish.js'

@@ -1,8 +1,7 @@
 // publish.js
 // このスクリプトは、ユーザーが入力した記事をGitHubリポジトリに公開するための機能を提供します。
-// GitHubのOAuth認証、ファイルの作成、およびエラー処理を含みます。
 
-import { Octokit } from '@octokit/rest';
+import GitHubService from './github-service.js';
 import STORAGE_KEYS from './constants.js';
 
 /**
@@ -46,9 +45,9 @@ class PublishUI {
    * イベントリスナーを設定
    */
   bindEvents() {
-    this.title.addEventListener('input', validateInputs);
-    this.article.addEventListener('input', validateInputs);
-    this.publishButton.addEventListener('click', publish);
+    this.title.addEventListener('input', () => this.validateInputs());
+    this.article.addEventListener('input', () => this.validateInputs());
+    this.publishButton.addEventListener('click', () => this.publish());
     this.closeButton.addEventListener('click', () => window.close());
   }
 
@@ -101,63 +100,12 @@ class PublishUI {
   }
 
   /**
-   * GitHub認証を行い、アクセストークンを取得する
-   * @returns {Promise<string>} GitHubアクセストークン
-   */
-  async authenticate() {
-    const redirectUrl = chrome.identity.getRedirectURL("github");
-    const authUrl = `${this.config.GITHUB_AUTH_URL}?client_id=${this.config.CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}&scope=repo`;
-
-    try {
-      // Chrome拡張機能の認証フローを開始
-      const code = await new Promise((resolve, reject) => {
-        chrome.identity.launchWebAuthFlow({
-          url: authUrl,
-          interactive: true
-        }, (responseUrl) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error("GitHub認証に失敗しました。"));
-          } else {
-            const url = new URL(responseUrl);
-            const code = url.searchParams.get("code");
-            if (!code) {
-              reject(new Error("GitHub認証コードの取得に失敗しました。"));
-            } else {
-              resolve(code);
-            }
-          }
-        });
-      });
-
-      // 認証コードをアクセストークンと交換
-      const response = await fetch(`${this.config.FUNCTION_URL}?code=${code}`);
-      if (!response.ok) {
-        throw new Error(response.status === 403 
-          ? 'Zenn It!認証サービスが停止している可能性があります。'
-          : 'GitHubアクセストークンの取得に失敗しました。');
-      }
-
-      const data = await response.text();
-      const params = new URLSearchParams(data);
-      const accessToken = params.get('access_token');
-      if (!accessToken) {
-        throw new Error('GitHubアクセストークンの取得に失敗しました。');
-      }
-
-      return accessToken;
-    } catch (error) {
-      console.error('認証エラー:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Chrome拡張機能のストレージからデータを読み込む
    * @returns {Promise<Object>} ストレージから読み込んだデータ
    */
   async loadStorageData() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT, STORAGE_KEYS.ACCESS_TOKEN], resolve);
+      chrome.storage.sync.get([STORAGE_KEYS.REPOSITORY, STORAGE_KEYS.PROMPT, STORAGE_KEYS.TOKEN], resolve);
     });
   }
 
@@ -170,77 +118,27 @@ class PublishUI {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  /**
-   * ファイルをGitHubリポジトリに追加する
-   * @param {string} repo リポジトリ名 (形式: "ユーザー名/リポジトリ名")
-   * @param {string} path リポジトリ内のファイルパス
-   * @param {string} content ファイルの内容
-   * @param {string} message コミットメッセージ
-   * @param {string} accessToken GitHubアクセストークン
-   * @returns {Promise<Object>} GitHubのAPI応答
-   */
-  async addFileToRepo(repo, path, content, message, accessToken) {
-    const [owner, repoName] = repo.split('/');
-    const octokit = new Octokit({ auth: accessToken });
-
-    try {
-      // ファイルの現在の状態を取得
-      const { data: currentFile } = await octokit.rest.repos.getContent({
-        owner,
-        repo: repoName,
-        path,
-      }).catch(e => e.status === 404 ? { data: null } : Promise.reject(e));
-
-      // ファイルを作成または更新
-      const response = await octokit.rest.repos.createOrUpdateFileContents({
-        owner,
-        repo: repoName,
-        path,
-        message,
-        content: this.unicodeToBase64(content),
-        sha: currentFile ? currentFile.sha : undefined,
-      });
-
-      console.log('ファイルが正常に作成または更新されました:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('addFileToRepoでエラーが発生しました:', error);
-      throw new Error(error.status === 404 
-        ? 'リポジトリの設定に誤りがある可能性があります。設定を確認してください。'
-        : '記事の更新に失敗しました。');
-    }
-  }
-
-  /**
-   * 記事を公開する
-   * ユーザーが入力した記事をGitHubリポジトリに公開するメインのプロセスを実行します
-   */
   async publish() {
     if (!this.validateInputs()) return;
 
     try {
       this.clearErrorMessage();
 
-      // 保存されたデータを読み込む
       const data = await this.loadStorageData();
-      const { [STORAGE_KEYS.REPOSITORY]: repository, [STORAGE_KEYS.PROMPT]: prompt, [STORAGE_KEYS.ACCESS_TOKEN]: accessToken } = data;
+      const { [STORAGE_KEYS.REPOSITORY]: repository, [STORAGE_KEYS.PROMPT]: prompt, [STORAGE_KEYS.TOKEN]: accessToken } = data;
 
-      // リポジトリ情報やプロンプトが設定されていない場合、オプションページを開く
       if (!repository || !prompt) {
         chrome.runtime.openOptionsPage();
         return;
       }
 
-      // アクセストークンがない場合、認証を行う
-      const token = accessToken || await this.authenticate();
+      const token = accessToken || await GitHubService.authenticate(this.config);
 
-      // ファイル名とコンテンツを準備
       const fileName = `articles/${this.title.value.trim()}`;
       const content = this.article.value.trim();
       const commitMessage = `Publish: ${fileName}`;
       
-      // GitHubリポジトリにファイルを追加
-      await this.addFileToRepo(repository, fileName, content, commitMessage, token);
+      await GitHubService.addFileToRepo(repository, fileName, content, commitMessage, token);
       this.showCompletionMessage(fileName);
     } catch (error) {
       console.error('公開に失敗しました:', error);
