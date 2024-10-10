@@ -5,39 +5,24 @@
 // 共通の定数をインポート
 import STORAGE_KEYS from './constants.js';
 
-console.log("Popup script started loading");
+console.log("Popup script started loading...");
 
 // DOMの読み込みが完了したら実行
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("Popup DOM loaded");
-
-  // UIの主要な要素を取得
-  const generateButton = document.getElementById('generateSummary');
-  const publishButton = document.getElementById('publishArticle');
-
-  // ボタンが見つからない場合はエラーログを出力して処理を終了
-  if (!generateButton || !publishButton) {
-    console.log("One or more buttons not found");
-    return;
-  }
-
   // 要約生成ボタンにクリックイベントリスナーを追加
-  generateButton.addEventListener('click', function() {
-    handleButtonClick('generateSummary');
+  document.getElementById('generateSummary').addEventListener('click', function() {
+    generateSummary();
   });
 
   // 記事公開ボタンにクリックイベントリスナーを追加
-  publishButton.addEventListener('click', function() {
+  document.getElementById('publishArticle').addEventListener('click', function() {
     publish();
   });
 
   /**
    * ボタンクリックを処理する関数
-   * @param {string} action - 実行するアクション（例: 'generateSummary'）
    */
-  function handleButtonClick(action) {
-    console.log(action + " button clicked");
-
+  function generateSummary() {
     // 現在アクティブなタブを取得
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       // タブの取得中にエラーが発生した場合
@@ -45,10 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Error querying tabs: " + chrome.runtime.lastError.message);
         return;
       }
-      console.log("Active tab: " + JSON.stringify(tabs[0]));
 
       // アクティブなタブにメッセージを送信
-      chrome.tabs.sendMessage(tabs[0].id, {action: action}, function(response) {
+      chrome.tabs.sendMessage(tabs[0].id, {action: 'generateSummary'}, function(response) {
         console.log("Response received in popup");
         // メッセージ送信中にエラーが発生した場合
         if (chrome.runtime.lastError) {
