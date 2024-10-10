@@ -19,6 +19,8 @@ class PopupUI {
     this.generateSummaryBtn = $('#generateSummary');
     this.publishArticleBtn = $('#publishArticle');
     this.statusMessage = $('#statusMessage');
+    // 許可されたURLのリスト
+    this.allowedUrls = ["https://claude.ai/", "https://chatgpt.com/"];
   }
 
   /**
@@ -41,12 +43,14 @@ class PopupUI {
 
   /**
    * ボタンの状態を更新
-   * 要約生成中かどうかに基づいてボタンの有効/無効を切り替えます
+   * 要約生成中かどうか、および現在のURLが許可されているかどうかに基づいてボタンの有効/無効を切り替えます
    */
   async updateButtonStates() {
     const isGenerating = await this.isGeneratingSummary();
-    this.generateSummaryBtn.disabled = isGenerating;
-    this.publishArticleBtn.disabled = isGenerating;
+    const isAllowedUrl = await this.checkCurrentUrl();
+    
+    this.generateSummaryBtn.disabled = isGenerating || !isAllowedUrl;
+    this.publishArticleBtn.disabled = isGenerating || !isAllowedUrl;
   }
 
   /**
@@ -57,6 +61,25 @@ class PopupUI {
     return new Promise(resolve => {
       chrome.storage.local.get(STORAGE_KEYS.IS_GENERATING, data => {
         resolve(data[STORAGE_KEYS.IS_GENERATING] || false);
+      });
+    });
+  }
+
+  /**
+   * 現在のURLが許可されているかどうかを確認
+   * @returns {Promise<boolean>} 許可されたURLの場合はtrue、そうでない場合はfalse
+   */
+  async checkCurrentUrl() {
+    return new Promise(resolve => {
+      chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+        if (tabs.length > 0) {
+          console.log(`Current tab: ${tabs[0]} URL: ${tabs[0].url}`);
+          const currentUrl = tabs[0].url;
+          const isAllowed = this.allowedUrls.some(url => currentUrl.startsWith(url));
+          resolve(isAllowed);
+        } else {
+          resolve(false);
+        }
       });
     });
   }

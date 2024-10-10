@@ -6,7 +6,8 @@
   "permissions": [
     "identity",
     "storage",
-    "clipboardRead"
+    "clipboardRead",
+    "activeTab"
   ],
   "web_accessible_resources": [{
     "resources": [
