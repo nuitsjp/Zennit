@@ -1,6 +1,8 @@
 // background.js
 import STORAGE_KEYS from './constants.js';
 
+console.log("Zenn It! extension background loding...");
+
 // 拡張機能のインストール時やアップデート時に実行される
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Zenn It! extension installed or updated.");

@@ -13,7 +13,7 @@
       "assets/prompt/claude.txt",
       "assets/json/config.json",
       "js/content.bundle.js",
-      "js/constants.js"
+      "js/constants.bundle.js"
     ],
     "matches": ["https://claude.ai/*"]
   }],
@@ -27,7 +27,7 @@
   "content_scripts": [
     {
       "matches": ["https://claude.ai/*"],
-      "js": ["js/content-loader.bundle.js"]
+      "js": ["js/content.bundle.js"]
     }
   ],
   "options_page": "html/options.html",
