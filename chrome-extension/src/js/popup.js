@@ -2,69 +2,111 @@
 // このスクリプトは、Chrome拡張機能のポップアップUIの動作を制御します。
 // 主な機能は、記事の要約生成と公開プロセスの開始です。
 
-// 共通の定数をインポート
 import STORAGE_KEYS from './constants.js';
 
 console.log("Popup script started loading...");
 
-// DOMの読み込みが完了したら実行
-document.addEventListener('DOMContentLoaded', function() {
-  // 要約生成ボタンにクリックイベントリスナーを追加
-  document.getElementById('generateSummary').addEventListener('click', function() {
-    generateSummary();
-  });
+// DOMの操作を簡略化するユーティリティ関数
+const $ = document.querySelector.bind(document);
 
-  // 記事公開ボタンにクリックイベントリスナーを追加
-  document.getElementById('publishArticle').addEventListener('click', function() {
-    publish();
-  });
+class PopupUI {
+  constructor() {
+    this.generateSummaryBtn = $('#generateSummary');
+    this.publishArticleBtn = $('#publishArticle');
+    this.statusMessage = $('#statusMessage');
+  }
 
-  /**
-   * ボタンクリックを処理する関数
-   */
-  function generateSummary() {
-    // 現在アクティブなタブを取得
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      // tabsがnullまたはundefined、あるいは空配列の場合
-      if (!tabs || tabs.length === 0) {
-        console.error("No active tab found or tabs is null/undefined");
-        return;
-      }
+  // UIの初期化
+  initialize() {
+    this.bindEvents();
+    this.updateButtonStates();
+  }
 
-      // アクティブなタブにメッセージを送信
-      chrome.tabs.sendMessage(tabs[0].id, {action: 'generateSummary'}, function(response) {
-        console.log("Response received in popup");
-        // メッセージ送信中にエラーが発生した場合
-        if (chrome.runtime.lastError) {
-          console.log("Chrome runtime error: " + chrome.runtime.lastError.message);
-        }
+  // イベントリスナーの設定
+  bindEvents() {
+    this.generateSummaryBtn.addEventListener('click', () => this.generateSummary());
+    this.publishArticleBtn.addEventListener('click', () => this.publish());
+  }
+
+  // ボタンの状態を更新
+  async updateButtonStates() {
+    const isGenerating = await this.isGeneratingSummary();
+    this.generateSummaryBtn.disabled = isGenerating;
+    this.publishArticleBtn.disabled = isGenerating;
+  }
+
+  // 要約生成中かどうかを確認
+  async isGeneratingSummary() {
+    return new Promise(resolve => {
+      chrome.storage.local.get(STORAGE_KEYS.IS_GENERATING, data => {
+        resolve(data[STORAGE_KEYS.IS_GENERATING] || false);
       });
     });
   }
 
-  /**
-   * 記事公開プロセスを開始する関数
-   * リポジトリの設定を確認し、適切な次のステップを実行します
-   */
-  function publish() {
-    // ストレージからリポジトリ設定を取得
-    chrome.storage.sync.get(STORAGE_KEYS.REPOSITORY, function(data) {
-      if (!data[STORAGE_KEYS.REPOSITORY]) {
-        // リポジトリが設定されていない場合
-        alert('リポジトリが設定されていません。設定画面で設定してください。');
-        
-        // 設定ページを開く
-        chrome.runtime.openOptionsPage(() => {
-          window.close();  // ポップアップを閉じる
-        });
-      } else {
-        // リポジトリが設定されている場合、publish.html を新しいタブで開く
-        chrome.tabs.create({ url: chrome.runtime.getURL('../html/publish.html') }, function() {
-          window.close();  // ポップアップを閉じる
-        });
-      }
-    });
+  // ステータスメッセージを表示
+  showStatus(message, isError = false) {
+    this.statusMessage.textContent = message;
+    this.statusMessage.classList.toggle('error', isError);
+    this.statusMessage.hidden = false;
   }
+
+  // 要約生成プロセスを開始
+  async generateSummary() {
+    try {
+      const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+      if (!tabs || tabs.length === 0) {
+        throw new Error("アクティブなタブが見つかりません");
+      }
+
+      this.showStatus("要約を生成中...");
+      await chrome.tabs.sendMessage(tabs[0].id, {action: 'generateSummary'});
+      this.showStatus("要約が生成されました");
+    } catch (error) {
+      console.error("要約生成中にエラーが発生しました:", error);
+      this.showStatus("要約生成中にエラーが発生しました", true);
+    } finally {
+      this.updateButtonStates();
+    }
+  }
+
+  // 記事公開プロセスを開始
+  async publish() {
+    try {
+      const data = await chrome.storage.sync.get(STORAGE_KEYS.REPOSITORY);
+      if (!data[STORAGE_KEYS.REPOSITORY]) {
+        this.showStatus("リポジトリが設定されていません", true);
+        await this.openOptionsPage();
+      } else {
+        await this.openPublishPage();
+      }
+    } catch (error) {
+      console.error("公開プロセス開始中にエラーが発生しました:", error);
+      this.showStatus("公開プロセス開始中にエラーが発生しました", true);
+    }
+  }
+
+  // オプションページを開く
+  async openOptionsPage() {
+    if (chrome.runtime.openOptionsPage) {
+      await chrome.runtime.openOptionsPage();
+    } else {
+      await chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+    }
+    window.close();
+  }
+
+  // 公開ページを開く
+  async openPublishPage() {
+    await chrome.tabs.create({ url: chrome.runtime.getURL('../html/publish.html') });
+    window.close();
+  }
+}
+
+// DOMの読み込みが完了したらUIを初期化
+document.addEventListener('DOMContentLoaded', () => {
+  const ui = new PopupUI();
+  ui.initialize();
 });
 
 console.log("Popup script finished loading");
