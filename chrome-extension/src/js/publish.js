@@ -1,6 +1,6 @@
 // publish.js
 // このスクリプトは、ユーザーが入力した記事をGitHubリポジトリに公開するための機能を提供します。
-// GitHubのOAuth認証、ファイルの作成、およびエラー処理を含みます。
+// GitHubのOAuth認証、ファイルの作成、更新、およびエラー処理を含みます。
 
 import GitHubService from './github-service.js';
 import STORAGE_KEYS from './constants.js';
@@ -128,9 +128,24 @@ class PublishUI {
       const content = this.article.value.trim();
       const commitMessage = `Publish: ${fileName}`;
       
-      // GitHubリポジトリにファイルを追加
-      await GitHubService.addFileToRepo(repository, fileName, content, commitMessage, token);
-      this.showCompletionMessage(fileName);
+      // ファイルの存在を確認
+      const existingSha = await GitHubService.checkFileExistence(repository, fileName, token);
+      
+      if (existingSha) {
+        // ファイルが存在する場合、更新の確認を行う
+        const shouldUpdate = await this.confirmUpdate(fileName);
+        if (shouldUpdate) {
+          await GitHubService.updateFile(repository, fileName, content, commitMessage, existingSha, token);
+          this.showCompletionMessage(fileName, true);
+        } else {
+          console.log('更新がキャンセルされました');
+          return;
+        }
+      } else {
+        // 新規ファイルの場合
+        await GitHubService.addNewFile(repository, fileName, content, commitMessage, token);
+        this.showCompletionMessage(fileName, false);
+      }
     } catch (error) {
       console.error('公開に失敗しました:', error);
       this.showErrorMessage(error);
@@ -138,11 +153,25 @@ class PublishUI {
   }
 
   /**
-   * 完了メッセージを表示する
-   * @param {string} fileName 作成されたファイル名
+   * ファイルの更新確認を行う
+   * @param {string} fileName 更新対象のファイル名
+   * @returns {Promise<boolean>} 更新を行うかどうか
    */
-  showCompletionMessage(fileName) {
-    alert(`ファイル "${fileName}" が正常に公開されました。`);
+  async confirmUpdate(fileName) {
+    return new Promise((resolve) => {
+      const result = confirm(`ファイル "${fileName}" は既に存在します。上書きしますか？`);
+      resolve(result);
+    });
+  }
+
+  /**
+   * 完了メッセージを表示する
+   * @param {string} fileName 作成または更新されたファイル名
+   * @param {boolean} isUpdate 更新の場合はtrue、新規作成の場合はfalse
+   */
+  showCompletionMessage(fileName, isUpdate) {
+    const action = isUpdate ? '更新' : '作成';
+    alert(`ファイル "${fileName}" が正常に${action}されました。`);
     window.close();
   }
 
