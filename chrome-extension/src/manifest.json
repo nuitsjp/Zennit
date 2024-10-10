@@ -4,7 +4,6 @@
   "version": "0.0.4",
   "description": "Claude.aiのチャット応対を要約し、Zennにブログとして公開するための拡張です。",
   "permissions": [
-    "tabs",
     "identity",
     "storage",
     "clipboardRead"
@@ -14,16 +13,18 @@
       "assets/prompt/chatgpt.txt",
       "assets/prompt/claude.txt",
       "assets/json/config.json",
-      "js/content.bundle.js",
       "js/constants.bundle.js"
     ],
     "matches": [
       "https://claude.ai/*",
       "https://chatgpt.com/*"
-  ]
+    ]
   }],
+  "action": {
+    "default_popup": "html/popup.html"
+  },
   "background": {
-    "service_worker": "./js/background.bundle.js"
+    "service_worker": "js/background.bundle.js"
   },
   "content_scripts": [
     {
