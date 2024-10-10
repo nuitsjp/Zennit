@@ -73,19 +73,28 @@ class PopupUI {
   }
 
   /**
+   * ステータスメッセージをクリア
+   * メッセージを非表示にし、内容をクリアします
+   */
+  clearStatus() {
+    this.statusMessage.hidden = true;
+    this.statusMessage.classList.toggle('error', false);
+    this.statusMessage.textContent = '';
+  }
+
+  /**
    * 要約生成プロセスを開始
    * アクティブなタブに要約生成のメッセージを送信します
    */
   async generateSummary() {
+    clearStatus();
     try {
       const tabs = await chrome.tabs.query({active: true, currentWindow: true});
       if (!tabs || tabs.length === 0) {
         throw new Error("アクティブなタブが見つかりません");
       }
 
-      this.showStatus("要約を生成中...");
       await chrome.tabs.sendMessage(tabs[0].id, {action: 'generateSummary'});
-      this.showStatus("要約が生成されました");
     } catch (error) {
       console.error("要約生成中にエラーが発生しました:", error);
       this.showStatus("要約生成中にエラーが発生しました", true);
@@ -99,6 +108,7 @@ class PopupUI {
    * リポジトリの設定を確認し、適切な次のステップを実行します
    */
   async publish() {
+    clearStatus();
     try {
       const data = await chrome.storage.sync.get(STORAGE_KEYS.REPOSITORY);
       if (!data[STORAGE_KEYS.REPOSITORY]) {
