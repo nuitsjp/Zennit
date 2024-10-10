@@ -25,9 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
   function generateSummary() {
     // 現在アクティブなタブを取得
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      // タブの取得中にエラーが発生した場合
-      if (chrome.runtime.lastError) {
-        console.log("Error querying tabs: " + chrome.runtime.lastError.message);
+      // tabsがnullまたはundefined、あるいは空配列の場合
+      if (!tabs || tabs.length === 0) {
+        console.error("No active tab found or tabs is null/undefined");
         return;
       }
 
@@ -54,16 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('リポジトリが設定されていません。設定画面で設定してください。');
         
         // 設定ページを開く
-        if (chrome.runtime.openOptionsPage) {
-          // openOptionsPage APIが利用可能な場合
-          chrome.runtime.openOptionsPage(() => {
-            window.close();  // ポップアップを閉じる
-          });
-        } else {
-          // openOptionsPage APIが利用できない場合、URLを直接開く
-          window.open(chrome.runtime.getURL('../html/options.html'));
+        chrome.runtime.openOptionsPage(() => {
           window.close();  // ポップアップを閉じる
-        }
+        });
       } else {
         // リポジトリが設定されている場合、publish.html を新しいタブで開く
         chrome.tabs.create({ url: chrome.runtime.getURL('../html/publish.html') }, function() {
