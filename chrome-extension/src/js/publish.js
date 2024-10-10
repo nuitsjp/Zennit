@@ -46,9 +46,9 @@ class PublishUI {
    * イベントリスナーを設定
    */
   bindEvents() {
-    this.title.addEventListener('input', () => this.validateInputs());
-    this.article.addEventListener('input', () => this.validateInputs());
-    this.publishButton.addEventListener('click', () => this.publish());
+    this.title.addEventListener('input', validateInputs);
+    this.article.addEventListener('input', validateInputs);
+    this.publishButton.addEventListener('click', publish);
     this.closeButton.addEventListener('click', () => window.close());
   }
 
